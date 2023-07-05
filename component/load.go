@@ -71,8 +71,6 @@ func handleLoadMsg(m Model, msg loadMsg) (Model, tea.Cmd) {
 	return handleLoadMsgStatic(m, msg)
 }
 
-
-
 func handleLoadMsgStatic(m Model, msg loadMsg) (Model, tea.Cmd) {
 	defer msg.Close()
 
@@ -117,7 +115,33 @@ func handleLoadMsgAnimation(m Model, msg loadMsg) (Model, tea.Cmd) {
 	}
 }
 
+func imageToString(width, height uint, url string, img image.Image) (string, error) {
+	img = resize.Thumbnail(width, height*2-4, img, resize.Lanczos3)
+	b := img.Bounds()
+	w := b.Max.X
+	h := b.Max.Y
+	p := termenv.ColorProfile()
+	str := strings.Builder{}
+	for y := 0; y < h; y += 2 {
+		/*
+			for x := w; x < int(width); x = x + 2 {
+				str.WriteString(" ")
+			}
+		*/
+		for x := 0; x < w; x++ {
+			c1, _ := colorful.MakeColor(img.At(x, y))
+			color1 := p.Color(c1.Hex())
+			str.WriteString(termenv.String(" ").
+				Background(color1).
+				String())
+		}
+		str.WriteString("\n")
+	}
+	str.WriteString(fmt.Sprintf("q to quit | %s\n", url))
+	return str.String(), nil
+}
 
+/*
 func imageToString(width, height uint, url string, img image.Image) (string, error) {
 	img = resize.Thumbnail(width, height*2-4, img, resize.Lanczos3)
 	b := img.Bounds()
@@ -144,7 +168,7 @@ func imageToString(width, height uint, url string, img image.Image) (string, err
 	str.WriteString(fmt.Sprintf("q to quit | %s\n", url))
 	return str.String(), nil
 }
-
+*/
 
 func readerToimage(width uint, height uint, url string, r io.Reader) (string, error) {
 	if strings.HasSuffix(strings.ToLower(url), ".svg") {
